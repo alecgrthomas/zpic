@@ -488,7 +488,7 @@ void emf_update_gc( t_emf *emf )
 		}
 
 		// upper
-		for (int i=0; i<emf->gc[0]; i++) {
+		for (int i=0; i<emf->gc[1]; i++) {
 			E[ nx + i ].x = E[ i ].x;
 			E[ nx + i ].y = E[ i ].y;
 			E[ nx + i ].z = E[ i ].z;
