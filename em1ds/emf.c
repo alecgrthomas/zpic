@@ -243,9 +243,12 @@ void emf_add_laser( t_emf* const emf, t_emf_laser* const laser )
 
     for (int i = 0; i < emf->E.nx; i++) {
 
-        z = i * dx - z_center;
-
+        // Get envelope
+        z = i * dx;
         lenv   = amp*lon_env( laser, z );
+
+        // Phase is calculated using center of pulse as reference
+        z -=  z_center;
 
         // Ex[i] = 0.0
         Ey[i] = +lenv * cos( k * z ) * cos_pol;
