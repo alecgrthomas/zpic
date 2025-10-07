@@ -2,11 +2,12 @@
  * @file particles.c
  * @author Ricardo Fonseca
  * @brief Particle species
- * @version 0.2
+ * @version 0.21
  * @date 2022-02-04
  * 
  * @copyright Copyright (c) 2022
  * 
+ * Additions for shape functions AGRT 2025 
  */
 
 #include <stdlib.h>
@@ -538,7 +539,7 @@ void spec_delete( t_species* spec )
  * @param part  Particle data
  * @param q     Species charge per particle
  */
-void deposit( t_scalar_grid * rho, const t_part* restrict const part, float q )
+void deposit_linear( t_scalar_grid * rho, const t_part* restrict const part, float q )
 {
 	int i;
 	float s0, s1;
@@ -552,6 +553,27 @@ void deposit( t_scalar_grid * rho, const t_part* restrict const part, float q )
 	rho->s[i+1] += s1 * q;
 
 }
+void deposit_quadratic( t_scalar_grid * rho, const t_part* restrict const part, float q )
+{
+	int i;
+	float Delta, s0, s1, sm1;
+
+	i = part->ix;
+
+	Delta = 0.5f + part->x;
+	s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
+	sm1 =0.5 * (0.5 + Delta)*(0.5 - Delta);
+	s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
+
+	rho->s[i-1] += sm1 * q;
+	rho->s[i] += s0 * q;
+	rho->s[i+1] += s1 * q;
+
+}
+
+void (*deposit)( t_scalar_grid * rho, const t_part* restrict const part, float q ) = deposit_linear;
+
+
 
 /*********************************************************************************************
 
@@ -640,7 +662,7 @@ void spec_sort( t_species* spec )
  * @param part 		Particle data
  * @param Ex 		Electric field interpolated at particle position
  */
-void interpolate_fld( t_scalar_grid* E,
+void interpolate_fld_linear( t_scalar_grid* E,
 	          const t_part* restrict const part, float* restrict const Ex )
 {
 	register int i;
@@ -653,6 +675,26 @@ void interpolate_fld( t_scalar_grid* E,
 
 	*Ex = E->s[i] * s0 + E->s[i+1] * s1;
 }
+
+void interpolate_fld_quadratic( t_scalar_grid* E,
+	          const t_part* restrict const part, float* restrict const Ex )
+{
+	register int i;
+	register float s0, s1, sm1, Delta;
+
+	i = part->ix;
+
+	Delta = 0.5f + part->x;
+	s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
+	sm1 =0.5 * (0.5 + Delta)*(0.5 - Delta);
+	s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
+
+	*Ex = E->s[i-1] * sm1 + E->s[i] * s0 + E->s[i+1] * s1;
+}
+
+
+void (*interpolate_fld) ( t_scalar_grid* E,
+	          const t_part* restrict const part, float* restrict const Ex ) = interpolate_fld_linear;
 
 /**
  * @brief Returns number of cells moved

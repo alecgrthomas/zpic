@@ -7,6 +7,7 @@
  * 
  * @copyright Copyright (c) 2022
  * 
+ * Modified by AGRT 2025 to include shape functions for demonstration
  */
 
 #include <stdlib.h>
@@ -651,7 +652,27 @@ void deposit_charge( t_scalar_grid * rho, const t_part* restrict const part, con
  * @param rg    Particle $1 / \gamma$
  * @param dx    Cell size
  */
-void deposit_current( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx )
+void deposit_current_nearest( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx )
+{
+    // Find position time centered with velocity
+    int i = part->ix;
+    float x = part->x + 0.5f * dx;
+
+    int di = ltrim(x);
+
+    i += di;
+    x -= di;
+
+    float jx = q * part -> ux * rg;
+    float jy = q * part -> uy * rg;
+    float jz = q * part -> uz * rg;
+
+    J->x[i] += jx;
+    J->y[i] += jy;
+    J->z[i] += jz;
+}
+
+void deposit_current_linear( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx )
 {
     // Find position time centered with velocity
     int i = part->ix;
@@ -677,6 +698,42 @@ void deposit_current( t_float3_grid * J, const t_part* restrict const part, cons
     J->y[i+1] += s1 * jy;
     J->z[i+1] += s1 * jz;
 }
+
+void deposit_current_quadratic( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx )
+{
+    // Find position time centered with velocity
+    int i = part->ix;
+    float x = part->x + 0.5f * dx;
+    
+    int di = ltrim(x);
+
+    i += di;
+    x -= di;
+    
+    float Delta = 0.5f + part->x;
+	float s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
+	float sm1 =0.5 * (0.5 + Delta)*(0.5 - Delta);
+	float s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
+
+    float jx = q * part -> ux * rg;
+    float jy = q * part -> uy * rg;
+    float jz = q * part -> uz * rg;
+
+    J->x[i-1] += sm1 * jx;
+    J->y[i-1] += sm1 * jy;
+    J->z[i-1] += sm1 * jz;
+
+    J->x[i] += s0 * jx;
+    J->y[i] += s0 * jy;
+    J->z[i] += s0 * jz;
+
+    J->x[i+1] += s1 * jx;
+    J->y[i+1] += s1 * jy;
+    J->z[i+1] += s1 * jz;
+}
+
+void (*deposit_current)( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx ) = deposit_current_nearest;
+
 
 /*********************************************************************************************
  
@@ -763,7 +820,23 @@ void spec_sort( t_species* spec )
  * @param Ep    E-field interpolated at particle position
  * @param Bp    B-field interpolated at particle position
  */
-void interpolate_fld( t_float3_grid* E, t_float3_grid* B, 
+void interpolate_fld_nearest( t_float3_grid* E, t_float3_grid* B, 
+              const t_part* restrict const part, float3* restrict const Ep, float3* restrict const Bp )
+{
+    int i;
+    
+    i = part->ix;
+
+    Ep->x = E->x[i] ;
+    Ep->y = E->y[i] ;
+    Ep->z = E->z[i] ;
+
+    Bp->x = B->x[i] ;
+    Bp->y = B->y[i] ;
+    Bp->z = B->z[i] ;
+}	
+
+ void interpolate_fld_linear( t_float3_grid* E, t_float3_grid* B, 
               const t_part* restrict const part, float3* restrict const Ep, float3* restrict const Bp )
 {
     int i;
@@ -781,7 +854,33 @@ void interpolate_fld( t_float3_grid* E, t_float3_grid* B,
     Bp->x = B->x[i] * s0 + B->x[i+1] * s1;
     Bp->y = B->y[i] * s0 + B->y[i+1] * s1;
     Bp->z = B->z[i] * s0 + B->z[i+1] * s1;
-}		
+}	
+
+void interpolate_fld_quadratic( t_float3_grid* E, t_float3_grid* B, 
+              const t_part* restrict const part, float3* restrict const Ep, float3* restrict const Bp )
+{
+    int i;
+    
+    i = part->ix;
+    
+    float Delta = 0.5f + part->x;
+	float s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
+	float sm1 =0.5 * (0.5 + Delta)*(0.5 - Delta);
+	float s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
+
+    Ep->x = E->x[i] * sm1 + E->x[i] * s0 + E->x[i+1] * s1;
+    Ep->y = E->y[i] * sm1 +E->y[i] * s0 + E->y[i+1] * s1;
+    Ep->z = E->z[i] * sm1 +E->z[i] * s0 + E->z[i+1] * s1;
+
+    Bp->x = B->x[i] * sm1 + B->x[i] * s0 + B->x[i+1] * s1;
+    Bp->y = B->y[i] * sm1 +B->y[i] * s0 + B->y[i+1] * s1;
+    Bp->z = B->z[i] * sm1 +B->z[i] * s0 + B->z[i+1] * s1;
+}	
+
+
+
+void (*interpolate_fld)( t_float3_grid* E, t_float3_grid* B, 
+              const t_part* restrict const part, float3* restrict const Ep, float3* restrict const Bp ) = interpolate_fld_nearest;
 
 /**
  * @brief Advance Particle species 1 timestep
