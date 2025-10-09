@@ -1429,7 +1429,7 @@ cdef class Charge:
 
 
 cdef class Simulation:
-	"""Simulation(nx, box, dt, species=None, report=None, init_fld=None, ext_fld=None, neutral_bkg=False)
+	"""Simulation(nx, box, dt, species=None, report=None, init_fld=None, ext_fld=None, neutral_bkg=False, spline_order=1)
 	
 	ZPIC EM1DS Simulation class
 
@@ -1480,7 +1480,7 @@ cdef class Simulation:
 
 	def __cinit__( self, int nx, float box, float dt, *, species = None, report = None,
 				   InitialField init_fld = None, ExternalField ext_fld = None,
-				   bint neutral_bkg = False ):
+				   bint neutral_bkg = False, int spline_order = 1):
 
 		# Sanity checks
 		if ( nx < 2 ):
@@ -1535,7 +1535,7 @@ cdef class Simulation:
 		self.report = report
 
 		# Initialize simulation
-		sim_new( self._thisptr, nx, box, dt, 0.0, 0, species_, n_species )
+		sim_new( self._thisptr, nx, box, dt, 0.0, 0, species_, n_species, spline_order )
 
 		self.n = 0
 		self.t = 0.0

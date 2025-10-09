@@ -558,7 +558,7 @@ cdef class Charge:
 
 
 cdef class Simulation:
-	"""Simulation(nx, box, dt, species=None, report=None, init_fld=None, ext_fld=None, neutral_bkg=False)
+	"""Simulation(nx, box, dt, species=None, report=None, init_fld=None, ext_fld=None, neutral_bkg=False, spline_order=1)
 	
 	ZPIC ES1D Simulation class
 
@@ -578,7 +578,8 @@ cdef class Simulation:
 	neutral_bkg : `bool`, optional
 		Controls adding a neutralizing charge background to the
 		simulation at initialization, defaults to False.
-	
+	spline_order : 0, 1, 2
+		Controls interpolation scheme
 	See also
 	--------
 	es1d.Species
@@ -595,7 +596,7 @@ cdef class Simulation:
 	cdef object report
 
 	def __cinit__( self, int nx, float box, float dt, *, species = None,
-	               report = None, bint neutral_bkg = False ):
+	               report = None, bint neutral_bkg = False, int spline_order = 1):
 
 		# Allocate the simulation object
 		self._thisptr = <t_simulation *> calloc(1, sizeof(t_simulation))
@@ -633,7 +634,7 @@ cdef class Simulation:
 		self.report = report
 
 		# Initialize simulation
-		sim_new( self._thisptr, nx, box, dt, 0.0, 0, species_, n_species )
+		sim_new( self._thisptr, nx, box, dt, 0.0, 0, species_, n_species, spline_order )
 
 		self.n = 0
 		self.t = 0.0

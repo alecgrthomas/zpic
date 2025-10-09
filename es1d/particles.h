@@ -195,6 +195,8 @@ double spec_time( void );
  */
 double spec_perf( void );
 
+void set_interpolation_scheme(int spline_order);
+
 /*********************************************************************************************
  
  Diagnostics

@@ -94,12 +94,14 @@ void sim_timings( t_simulation* sim, uint64_t t0, uint64_t t1 ){
  * @param species 		Array of particle species, may be NULL (no particles)
  * @param n_species 	Number of particle specis
  */
-void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species ){
+void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species, int spline_order){
 
 	sim -> dt = dt;
 	sim -> tmax = tmax;
 	sim -> ndump = ndump;
 
+	set_interpolation_scheme(spline_order);
+	
 	// Initialize Real FFT configurations
 	fftr_init_cfg( &sim -> fft_forward, nx, FFT_FORWARD );
 	fftr_init_cfg( &sim -> fft_backward, nx, FFT_BACKWARD );

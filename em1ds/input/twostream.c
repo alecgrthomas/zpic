@@ -25,6 +25,8 @@ void sim_init( t_simulation* sim ){
     // Initialize particles
 	const int n_species = 2;
 
+	const int spline_order = 1;
+
 	// Use 1000 particles per cell
 	int ppc = 500;
 
@@ -44,7 +46,7 @@ void sim_init( t_simulation* sim ){
 		      ufl, uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, spline_order);
 
 }
 

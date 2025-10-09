@@ -163,6 +163,7 @@ cdef extern from "../../es1d/simulation.h":
 		float tmax
 		int ndump
 		int n_species
+		int spline_order
 		t_species* species
 		t_field field
 		t_charge charge
@@ -170,7 +171,7 @@ cdef extern from "../../es1d/simulation.h":
 		t_fftr_cfg fft_forward
 		t_fftr_cfg fft_backward
 
-	void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species )
+	void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species, int spline_order )
 
 	void sim_iter( t_simulation* sim )
 	void sim_report_energy( t_simulation* sim )

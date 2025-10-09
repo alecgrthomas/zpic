@@ -125,7 +125,7 @@ int sim_filter_set( t_simulation* const sim, enum filter_type const type, float 
  * @param species 		Array of particle species, may be NULL (no particles)
  * @param n_species 	Number of particle specis
  */
-void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species );
+void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species, int spline_order );
 
 /**
  * @brief Prints out report on simulation timings

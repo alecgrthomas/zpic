@@ -710,9 +710,9 @@ void deposit_current_quadratic( t_float3_grid * J, const t_part* restrict const 
     i += di;
     x -= di;
     
-    float Delta = 0.5f + part->x;
+    float Delta = part->x;
 	float s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
-	float sm1 =0.5 * (0.5 + Delta)*(0.5 - Delta);
+	float sm1 =0.5 * (0.5 - Delta)*(0.5 - Delta);
 	float s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
 
     float jx = q * part -> ux * rg;
@@ -732,7 +732,7 @@ void deposit_current_quadratic( t_float3_grid * J, const t_part* restrict const 
     J->z[i+1] += s1 * jz;
 }
 
-void (*deposit_current)( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx ) = deposit_current_nearest;
+void (*deposit_current)( t_float3_grid * J, const t_part* restrict const part, const float q, const float rg, const float dx );
 
 
 /*********************************************************************************************
@@ -863,9 +863,9 @@ void interpolate_fld_quadratic( t_float3_grid* E, t_float3_grid* B,
     
     i = part->ix;
     
-    float Delta = 0.5f + part->x;
+    float Delta = part->x;
 	float s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
-	float sm1 =0.5 * (0.5 + Delta)*(0.5 - Delta);
+	float sm1 =0.5 * (0.5 - Delta)*(0.5 - Delta);
 	float s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
 
     Ep->x = E->x[i] * sm1 + E->x[i] * s0 + E->x[i+1] * s1;
@@ -880,7 +880,32 @@ void interpolate_fld_quadratic( t_float3_grid* E, t_float3_grid* B,
 
 
 void (*interpolate_fld)( t_float3_grid* E, t_float3_grid* B, 
-              const t_part* restrict const part, float3* restrict const Ep, float3* restrict const Bp ) = interpolate_fld_nearest;
+              const t_part* restrict const part, float3* restrict const Ep, float3* restrict const Bp );
+
+void set_interpolation_scheme(int spline_order)
+{
+	printf("Spline order = %d\n",spline_order);
+	
+	switch(spline_order)
+	{
+	case 0:
+		 (interpolate_fld) = &interpolate_fld_nearest;
+		 (deposit_current) = &deposit_current_nearest;
+		 break;
+	case 1:
+		 (interpolate_fld) = &interpolate_fld_linear;
+		 (deposit_current) = &deposit_current_linear;
+		 break;
+	case 2:
+		 (interpolate_fld) = &interpolate_fld_quadratic;
+		 (deposit_current) = &deposit_current_quadratic;
+		 break;
+	default:
+		 (interpolate_fld) = &interpolate_fld_linear;
+		 (deposit_current) = &deposit_current_linear;
+	}
+}
+
 
 /**
  * @brief Advance Particle species 1 timestep

@@ -16,7 +16,7 @@ void sim_init( t_simulation* sim ){
 	float tmax = 100.0;
 
 	// Simulation box
-	int   nx  = 120;
+	int   nx  = 64;
 	float box = 0.5 * M_PI;
 
 	// Diagnostic frequency
@@ -25,6 +25,10 @@ void sim_init( t_simulation* sim ){
 
     // Initialize particles
 	const int n_species = 2;
+
+	// Initialize interpolation spline
+	const int spline_order = 1;
+
 
 	// Use 500 particles per cell
 	int ppc = 500;
@@ -41,8 +45,7 @@ void sim_init( t_simulation* sim ){
 	spec_new( &species[1], "beam2", -1.0, ppc, &ufl2, &uth, nx, box, dt, NULL );
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
-
+	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species, spline_order);
 }
 
 

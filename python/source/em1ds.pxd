@@ -281,7 +281,7 @@ cdef extern from "../../em1ds/simulation.h":
 		t_fftr_cfg *fft_backward
 		t_filter *filter
 
-	void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species )
+	void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int ndump, t_species* species, int n_species, int spline_order)
 
 	int  sim_filter_set( t_simulation* sim, int type, float ck )
 	void sim_add_laser( t_simulation* sim,  t_emf_laser* laser )
