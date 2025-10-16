@@ -710,18 +710,21 @@ void deposit_current_quadratic( t_float3_grid * J, const t_part* restrict const 
     i += di;
     x -= di;
     
-    float Delta = part->x;
-	float s1 = 0.5 * (0.5 + Delta)*(0.5 + Delta);
-	float sm1 =0.5 * (0.5 - Delta)*(0.5 - Delta);
+    float Delta = x;
+	float s1 = 0.5f * (0.5f + Delta)*(0.5f + Delta);
+	float sm1 =0.5f * (0.5f - Delta)*(0.5f - Delta);
 	float s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
 
     float jx = q * part -> ux * rg;
     float jy = q * part -> uy * rg;
     float jz = q * part -> uz * rg;
 
-    J->x[i-1] += sm1 * jx;
-    J->y[i-1] += sm1 * jy;
-    J->z[i-1] += sm1 * jz;
+    // to hack in periodic bound
+	int im = (J->nx + i-1) % (J->nx) ;
+
+    J->x[im] += sm1 * jx;
+    J->y[im] += sm1 * jy;
+    J->z[im] += sm1 * jz;
 
     J->x[i] += s0 * jx;
     J->y[i] += s0 * jy;
@@ -868,13 +871,16 @@ void interpolate_fld_quadratic( t_float3_grid* E, t_float3_grid* B,
 	float sm1 =0.5 * (0.5 - Delta)*(0.5 - Delta);
 	float s0 = 1.0f - (s1+sm1); // 0.5f - part->x;
 
-    Ep->x = E->x[i] * sm1 + E->x[i] * s0 + E->x[i+1] * s1;
-    Ep->y = E->y[i] * sm1 +E->y[i] * s0 + E->y[i+1] * s1;
-    Ep->z = E->z[i] * sm1 +E->z[i] * s0 + E->z[i+1] * s1;
+        // to hack in periodic bound
+	int im = (E->nx + i-1) % (E->nx) ;
 
-    Bp->x = B->x[i] * sm1 + B->x[i] * s0 + B->x[i+1] * s1;
-    Bp->y = B->y[i] * sm1 +B->y[i] * s0 + B->y[i+1] * s1;
-    Bp->z = B->z[i] * sm1 +B->z[i] * s0 + B->z[i+1] * s1;
+    Ep->x = E->x[im] * sm1 + E->x[i] * s0 + E->x[i+1] * s1;
+    Ep->y = E->y[im] * sm1 +E->y[i] * s0 + E->y[i+1] * s1;
+    Ep->z = E->z[im] * sm1 +E->z[i] * s0 + E->z[i+1] * s1;
+
+    Bp->x = B->x[im] * sm1 + B->x[i] * s0 + B->x[i+1] * s1;
+    Bp->y = B->y[im] * sm1 +B->y[i] * s0 + B->y[i+1] * s1;
+    Bp->z = B->z[im] * sm1 +B->z[i] * s0 + B->z[i+1] * s1;
 }	
 
 

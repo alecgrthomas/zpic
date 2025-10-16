@@ -327,7 +327,8 @@ cdef class Species:
 		# Throw away guard cell
 		return charge[ 0 : self._thisptr.nx ]
 
-	def phasespace( self, int type, pha_nx, pha_range ):
+	#def phasespace( self, int type, pha_nx, pha_range ):
+	def phasespace( self, list quants, pha_nx, pha_range ):
 		"""phasespace(quants, pha_nx, pha_range)
 		
 		Calculate phasespace density of particle species
@@ -350,6 +351,8 @@ cdef class Species:
 		"""
 		cdef int _nx[2]
 		cdef float _range[2][2]
+		cdef int rep_type = PHASESPACE( self._pha_quants[quants[0]],
+				                        self._pha_quants[quants[1]])
 
 		_nx = np.array( pha_nx, dtype = np.int32)
 		_range = np.array( pha_range, dtype = np.float32)
@@ -357,7 +360,7 @@ cdef class Species:
 		pha = np.zeros( shape = (_nx[1],_nx[0]), dtype = np.float32 )
 		cdef float [:,:] buf = pha
 
-		spec_deposit_pha( self._thisptr, type, _nx, _range, &buf[0,0] )
+		spec_deposit_pha( self._thisptr, rep_type, _nx, _range, &buf[0,0] )
 
 		return pha
 

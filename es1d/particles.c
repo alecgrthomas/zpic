@@ -726,7 +726,7 @@ void (*interpolate_fld) ( t_scalar_grid* E,
 
 void set_interpolation_scheme(int spline_order)
 {
-	printf("Spline order = %d\n",spline_order);
+	//printf("Spline order = %d\n",spline_order);
 	
 	switch(spline_order)
 	{

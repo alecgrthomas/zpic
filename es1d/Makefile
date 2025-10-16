@@ -13,6 +13,7 @@ LDFLAGS = -lm
 # CFLAGS = -Ofast -std=c99 -pedantic
 # LDFLAGS = -lm
 
+INPUT_FILES = $(wildcard input/*)
 
 SOURCE = charge.c field.c particles.c grid.c fft.c random.c timer.c main.c simulation.c \
          zdf.c
@@ -29,11 +30,15 @@ all : $(SOURCE) $(TARGET)
 
 docs : $(DOCS)
 
-$(TARGET) : $(OBJ)
+$(TARGET) : $(OBJ) $(INPUT_FILES)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o $@
 
-.c.o:
+main.o: main.c $(INPUT_FILES)
+	$(CC) $(CFLAGS) -c main.c -o main.o
+
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
 
 $(DOCS) : $(SOURCE)
 	@doxygen ./Doxyfile

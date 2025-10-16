@@ -7,6 +7,7 @@
  * 
  * @copyright Copyright (c) 2022
  * 
+ * Changed FFT definition AGRT 2025
  */
 
 #include <stdio.h>
@@ -18,6 +19,7 @@
 #include "field.h"
 #include "zdf.h"
 #include "timer.h"
+#include "simplefft.c"
 
 /// Time spent advancing the electric field
 static double _field_time = 0.0;
@@ -156,10 +158,14 @@ void field_report( const t_field *field )
  * 
  * @param field 	Electric field
  * @param charge 	Charge density
+ *  
  */
+/*
 void update_fE( t_field *field, const t_charge *charge )
 {
-    float complex * const restrict frho = charge -> frho.s;
+    // old 
+	
+	float complex * const restrict frho = charge -> frho.s;
 
     float complex * const restrict fEx = field -> fE.s;
 
@@ -171,9 +177,10 @@ void update_fE( t_field *field, const t_charge *charge )
     	float kx = i * dk;
     	fEx[i] = - I * frho[i] / kx;
     }
+	
 
 }
-
+*/
 
 /**
  * @brief Updates electric field from Fourier transform
@@ -182,10 +189,78 @@ void update_fE( t_field *field, const t_charge *charge )
  * 
  * @param field 
  */
+/*
 void field_update( t_field *field )
 {
 	// Update E field
-   	fftr_c2r( field -> fft_backward, field -> fE.s, field ->E.s );
+	// fftr_c2r( field -> fft_backward, field -> fE.s, field ->E.s );
+
+
+
+   	// Update guard cells
+    float* const restrict Ex = field -> E.s;
+	
+    const unsigned nx = field -> E.nx;
+
+	// lower
+	for (int i = - field->E.gc[0]; i<0; i++) {
+		Ex[ i ] = Ex[ nx + i ];
+	}
+
+	// upper
+	for (int i=0; i<field->E.gc[1]; i++) {
+		Ex[ nx + i ] = Ex[ i ];
+	}
+	
+}
+*/
+
+void field_update_simple( t_field *field, const t_charge *charge )
+{
+	// Update E field
+	// fftr_c2r( field -> fft_backward, field -> fE.s, field ->E.s );
+
+	//float complex * const restrict frho = charge -> frho.s;
+
+	const int Nx = field -> E.nx;
+	const float kmax=fft_dk( field->E.nx, field->dx );
+	float k_j[Nx];
+	unsigned long k;
+	for ( k=0;k<Nx/2;++k)
+    {
+      k_j[k]=kmax*k;
+    }
+  for ( k=Nx/2;k<Nx;++k)
+    {
+      k_j[k]=kmax*k-kmax*Nx;
+    }
+  
+ float rhoIm[Nx]; // imaginary part is zero
+  for (k=0;k<Nx;++k) rhoIm[k]=0.0; 
+  
+  // E is real part
+   float rhoRe[Nx];
+  for (k=0;k<Nx;++k) rhoRe[k] = charge->rho.s[k];
+  
+  unsigned long result=FFT(rhoRe,rhoIm,Nx,-1); // result is error feedback
+  if (!result) printf("ERROR: in FFT, N is not a power of 2\n");
+
+  float swaptemp;
+  // zero the k=0 element
+  rhoIm[0]=rhoRe[0]=0.0;
+  // Algebraic equation -> integral in real space
+  for (k=1;k<Nx;++k)
+    {
+      swaptemp=rhoRe[k];
+      rhoRe[k]=rhoIm[k]/k_j[k];
+      rhoIm[k]=-1.0*swaptemp/k_j[k];
+    }
+
+  // Back to real space
+  FFT(rhoRe,rhoIm,Nx,1); // result is error feedback
+
+  // copy to field
+  for (k=0;k<Nx;++k) field->E.s[k] = rhoRe[k];
 
    	// Update guard cells
     float* const restrict Ex = field -> E.s;
@@ -216,12 +291,18 @@ void field_update( t_field *field )
 void field_advance( t_field *field, const t_charge *charge )
 {
 	uint64_t t0 = timer_ticks();
-	
+
+	// Old
+	/*
 	// Calculate fE
 	update_fE( field, charge );
 
 	// Update (real) E (also updates guard cells)
 	field_update( field );
+	*/
+
+	// new - using simple fft
+	field_update_simple( field, charge );
 
 	// Advance internal iteration number
     field -> iter += 1;
