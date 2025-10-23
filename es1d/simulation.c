@@ -95,6 +95,7 @@ void sim_new( t_simulation* sim, int nx, float box, float dt, float tmax, int nd
 	sim -> tmax = tmax;
 	sim -> ndump = ndump;
 
+	// NEW AGRT
 	set_interpolation_scheme(spline_order);
 
 	// Initialize FFT configurations

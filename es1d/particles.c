@@ -552,7 +552,7 @@ void deposit_linear( t_scalar_grid * rho, const t_part* restrict const part, flo
 {
 	int i;
 	float s0, s1;
-	i = part->ix;
+	i = (part->ix);
 
 	s0 = 0.5f - part->x;
 	s1 = 0.5f + part->x;
@@ -691,8 +691,9 @@ void interpolate_fld_linear( t_scalar_grid* E,
 	register int i;
 	register float s0, s1;
 
-	i = part->ix;
+	i = (part->ix);
 
+	// needed shifting 0.5 back!
 	s0 = 0.5f - part->x;
 	s1 = 0.5f + part->x;
 
@@ -723,6 +724,7 @@ void (*interpolate_fld) ( t_scalar_grid* E,
 	          const t_part* restrict const part, float* restrict const Ex );
 		
 
+float x_offset = -1.0f;
 
 void set_interpolation_scheme(int spline_order)
 {
@@ -733,18 +735,22 @@ void set_interpolation_scheme(int spline_order)
 	case 0:
 		 (interpolate_fld) = &interpolate_fld_nearest;
 		 (deposit) = &deposit_nearest;
+		 x_offset = 0.5f;
 		 break;
 	case 1:
 		 (interpolate_fld) = &interpolate_fld_linear;
 		 (deposit) = &deposit_linear;
+		 x_offset = -0.0f;
 		 break;
 	case 2:
 		 (interpolate_fld) = &interpolate_fld_quadratic;
 		 (deposit) = &deposit_quadratic;
+		 x_offset = 0.5f;
 		 break;
 	default:
 		 (interpolate_fld) = &interpolate_fld_linear;
 		 (deposit) = &deposit_linear;
+		 x_offset = -0.0f;
 	}
 }
 
@@ -796,13 +802,36 @@ void spec_advance( t_species* spec, t_field* field, t_charge* charge )
 
 	double energy = 0;
 
+	float Ex, vx;
+	float x1;
+	int di;
+	float dx;
+
+	// on first timestep shift by -0.5dx for first order scheme (not correctly centered)
+	
+	if (spec->iter==0)
+	{	
+		for (int i=0; i<spec->np; i++) 
+		{
+			spec -> part[i].x += x_offset;
+			x1 = spec -> part[i].x;
+
+			di = ltrim(x1);
+	
+			x1 -= di;
+
+			// Store results
+			spec -> part[i].x = x1;
+			spec -> part[i].ix += di;
+
+			// Use periodic boundaries in x
+			spec -> part[i].ix += (( spec -> part[i].ix < 0    ) ? nx0 : 0 ) -
+		                      (( spec -> part[i].ix >= nx0 ) ? nx0 : 0 );
+		}
+	}
+
 	// Advance particles
 	for (int i=0; i<spec->np; i++) {
-
-		float Ex, vx;
-		float x1;
-		int di;
-		float dx;
 
 		// Load particle velocity
 		vx = spec -> part[i].vx;
@@ -826,7 +855,7 @@ void spec_advance( t_species* spec, t_field* field, t_charge* charge )
 		x1 = spec -> part[i].x + dx;
 
 		di = ltrim(x1);
-
+	
 		x1 -= di;
 
 		// Store results

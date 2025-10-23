@@ -234,8 +234,12 @@ void field_update_simple( t_field *field, const t_charge *charge )
     {
       k_j[k]=kmax*k-kmax*Nx;
     }
-  
- float rhoIm[Nx]; // imaginary part is zero
+	float invkappaj[Nx];
+	for ( k=1;k<Nx;++k)
+	{
+		invkappaj[k] = 0.25*field->dx*sin(k_j[k]*field->dx)/sin(0.5*k_j[k]*field->dx)/sin(0.5*k_j[k]*field->dx);
+	}
+ 	float rhoIm[Nx]; // imaginary part is zero
   for (k=0;k<Nx;++k) rhoIm[k]=0.0; 
   
   // E is real part
@@ -252,8 +256,10 @@ void field_update_simple( t_field *field, const t_charge *charge )
   for (k=1;k<Nx;++k)
     {
       swaptemp=rhoRe[k];
-      rhoRe[k]=rhoIm[k]/k_j[k];
-      rhoIm[k]=-1.0*swaptemp/k_j[k];
+      //rhoRe[k]=rhoIm[k]/k_j[k];
+      //rhoIm[k]=-1.0*swaptemp/k_j[k];
+	  rhoRe[k]=rhoIm[k]*invkappaj[k];
+      rhoIm[k]=-1.0*swaptemp*invkappaj[k];
     }
 
   // Back to real space
