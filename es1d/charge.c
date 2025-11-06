@@ -15,6 +15,8 @@
 #include "charge.h"
 #include "zdf.h"
 #include "fft.h"
+#include "math.h"
+
 
 /**
  * @brief Initializes Electric charge density object
@@ -143,10 +145,17 @@ void charge_update( t_charge *charge )
 	fftr_r2c( charge->fft_forward, rho, frho );
 
 	// Filter charge
+	/*
 	for ( i = charge -> frho.nx/2; i < charge -> frho.nx; i++) {
 		charge -> frho.s[i] = 0;
 	}
-
+*/
+	// Filter charge - smoother filter AGRT 2025
+	float x=0.0, sinc2=1.0;
+	for ( i = 1; i < nx; i++) {
+		sinc2 = sin(x)*sin(x)/(x*x);
+		charge -> frho.s[i] *= sinc2*sinc2*sinc2*sinc2; // sinc^n filter
+	}
 	charge -> iter++;
 }
 

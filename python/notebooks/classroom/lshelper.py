@@ -1,5 +1,6 @@
 # This contains helper functions for Labscripts
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 
 # This function computes the actual position
@@ -32,10 +33,21 @@ def plot_field_and_charge(sim, charge_data_time, E_data_time, tmax):
     return  
 
 # This function plots the phase space of a given species at the current simulation time
-def plot_phase_space(sim, species,grid_size,xrange,vrange):
+def plot_phase_space(sim,species,grid_size,xrange,vrange):
     plt.figure(figsize=(6, 4))
     #plt.plot(xpos(species),  species.particles['vx'],  'b.', ms=2,alpha=0.5, label = "Left")
-    plt.imshow(np.abs(species.phasespace(['x1','v1'], grid_size, [xrange, vrange])),  cmap = 'magma',extent=(xrange[0],xrange[1],vrange[0],vrange[1]),aspect='auto')
+    if not (isinstance(species,list) or isinstance(species,tuple)):
+        img = np.flipud(np.abs(species.phasespace(['x1','v1'], grid_size, [xrange, vrange])))
+        mycmap = cm.magma
+        plt.imshow(img, cmap=mycmap, extent=(xrange[0],xrange[1],vrange[0],vrange[1]), aspect='auto', interpolation='none')
+    else:  
+        for ix, s in enumerate(species):
+            img = np.flipud(np.abs(s.phasespace(['x1','v1'], grid_size, [xrange, vrange])))
+            mycmap = cm.magma
+            if ix>0:
+                img = np.ma.masked_where(img < 1e-6*np.max(np.max(img)), img)
+            plt.imshow(img, cmap=mycmap, extent=(xrange[0],xrange[1],vrange[0],vrange[1]), aspect='auto', interpolation='none')
+        
     plt.xlabel(f"$x\omega_p/c$")
     plt.ylabel(f"$v_x/c$")
     plt.title("$v_x-x$ phasespace at $t = ${:g}".format(sim.t))
@@ -43,4 +55,5 @@ def plot_phase_space(sim, species,grid_size,xrange,vrange):
     plt.axis('tight')
     plt.show()
     return
+
 
