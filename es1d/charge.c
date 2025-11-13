@@ -151,8 +151,9 @@ void charge_update( t_charge *charge )
 	}
 */
 	// Filter charge - smoother filter AGRT 2025
-	float x=0.0, sinc2=1.0;
-	for ( i = 1; i < nx; i++) {
+	float x = 0.0; 
+	float sinc2 = 1.0;
+	for ( i = 1; i < charge -> frho.nx; i++) {
 		sinc2 = sin(x)*sin(x)/(x*x);
 		charge -> frho.s[i] *= sinc2*sinc2*sinc2*sinc2; // sinc^n filter
 	}
